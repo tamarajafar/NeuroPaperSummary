@@ -16,40 +16,125 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * {
+        font-family: 'Inter', sans-serif;
+        transition: all 0.2s ease-in-out;
+    }
+
     .block-container {
-        padding-top: 1rem;
-        padding-bottom: 0rem;
+        padding: 3rem 2rem !important;
+        max-width: 1200px;
+        margin: 0 auto;
     }
+
     .main > div {
-        padding: 2rem;
-        border-radius: 0.5rem;
-        background: white;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
+        padding: 2.5rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+
+    .main > div:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.08);
+    }
+
     h1 {
         color: #1e3d59;
-        font-size: 2.5rem !important;
-        margin-bottom: 1.5rem !important;
+        font-size: 3.2rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 2rem !important;
+        letter-spacing: -0.02em;
+        line-height: 1.2 !important;
     }
+
     h2 {
-        color: #1e3d59;
-        font-size: 1.8rem !important;
+        color: #2a4a6d;
+        font-size: 2.2rem !important;
+        font-weight: 600 !important;
+        margin: 1.8rem 0 1.2rem !important;
+        letter-spacing: -0.01em;
     }
+
     h3 {
-        color: #1e3d59;
-        font-size: 1.3rem !important;
+        color: #355a82;
+        font-size: 1.6rem !important;
+        font-weight: 500 !important;
+        margin: 1.5rem 0 1rem !important;
     }
-    .stButton button {
+
+    p, li {
+        color: #4a5568;
+        font-size: 1.1rem !important;
+        line-height: 1.7 !important;
+        margin-bottom: 1rem !important;
+    }
+
+    a {
+        color: #2b6cb0;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.2s ease;
+    }
+
+    a:hover {
+        border-color: #2b6cb0;
+    }
+
+    .stButton > button {
         width: 100%;
-        border-radius: 0.3rem;
-        height: 3rem;
-        background-color: #1e3d59;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        background: linear-gradient(135deg, #1e3d59 0%, #2a4a6d 100%);
+        color: white;
+        font-weight: 500;
+        font-size: 1.1rem;
+        border: none;
+        box-shadow: 0 2px 10px rgba(30, 61, 89, 0.15);
+        transition: all 0.2s ease;
     }
+
+    .stButton > button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(30, 61, 89, 0.25);
+    }
+
+    .sidebar .sidebar-content {
+        background: #f8fafc;
+        padding: 2rem 1rem;
+    }
+
     .stSelectbox > div > div {
         background-color: white;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem;
+    }
+
+    .stSelectbox > div > div:hover {
+        border-color: #2b6cb0;
+    }
+
+    /* Publications cards */
+    .publication-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+
+    .publication-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     }
     </style>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
 
 # Initialize session state
