@@ -1,40 +1,27 @@
 # Curriculum Vitae
 
 ## Education
-### Ph.D. in [Field]
-University Name, Year
-- Thesis: "Title of Thesis"
-- Advisor: Professor Name
+### Ph.D. in Neuroscience (In Progress)
+[Your University]
 
-### M.S. in [Field]
-University Name, Year
-- Thesis: "Title of Thesis"
+### Previous Education
+[Your Previous Degrees]
 
-## Professional Experience
-### Senior Researcher (Year-Present)
-Institution Name
-- Description of responsibilities
-- Key achievements
 
-### Postdoctoral Researcher (Year-Year)
-Institution Name
-- Description of research work
-- Key publications
+## Research Experience
+[List your research positions and experiences]
 
-## Awards and Honors
-- Award Name, Year
-- Honor Name, Year
-
-## Teaching Experience
-- Course Name, Institution, Year
-- Course Name, Institution, Year
+## Publications
+[Your publications will be shown in the Publications section]
 
 ## Skills
-- Technical Skill 1
-- Technical Skill 2
-- Software Skill 1
-- Software Skill 2
+- Neuroscience Research Methods
+- Data Analysis
+- Experimental Design
+- [Other relevant skills]
+
+## Awards and Honors
+[Your awards and honors]
 
 ## Professional Memberships
-- Organization 1
-- Organization 2
+[Your professional memberships]
