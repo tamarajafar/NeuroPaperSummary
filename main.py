@@ -1,17 +1,26 @@
+import os
 import streamlit as st
 import feedparser
 import openai
 import smtplib
 import schedule
-import time
 import firebase_admin
 from firebase_admin import credentials, firestore
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# 🔗 Firebase for storing subscribers & engagement
-cred = credentials.Certificate("firebase_creds.json")  # Ensure your Firebase credentials file is set
-firebase_admin.initialize_app(cred)
+# 🔹 Force install dependencies (fixes missing modules issue)
+os.system("pip install -r requirements.txt")
+
+# 🔹 Load API Keys securely from Streamlit Secrets
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"]
+EMAIL_USERNAME = os.getenv("EMAIL_USERNAME") or st.secrets["EMAIL_USERNAME"]
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") or st.secrets["EMAIL_PASSWORD"]
+
+# 🔹 Firebase Setup
+if not firebase_admin._apps:
+    cred = credentials.Certificate(st.secrets["firebase_creds"])  # Store in Streamlit Secrets
+    firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 # 🌍 RSS Feeds for Biotech & VC news
@@ -24,12 +33,16 @@ RSS_FEEDS = [
 
 # 🧠 GPT-4 Summarization Function
 def summarize_news(news_text):
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "system", "content": "Summarize this biotech news in 3 sentences."},
-                  {"role": "user", "content": news_text}]
-    )
-    return response['choices'][0]['message']['content']
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            api_key=OPENAI_API_KEY,  # 🔹 Ensuring API key is used correctly
+            messages=[{"role": "system", "content": "Summarize this biotech news in 3 sentences."},
+                      {"role": "user", "content": news_text}]
+        )
+        return response['choices'][0]['message']['content']
+    except Exception as e:
+        return f"Error summarizing: {e}"
 
 # 🔍 Fetch News from RSS and Summarize
 def fetch_and_summarize_news():
@@ -37,14 +50,14 @@ def fetch_and_summarize_news():
     for url in RSS_FEEDS:
         feed = feedparser.parse(url)
         for entry in feed.entries[:3]:  # Top 3 news per source
-            summary = summarize_news(entry.summary)
+            summary = summarize_news(entry.summary if "summary" in entry else entry.title)
             news_items.append(f"<li><a href='{entry.link}' target='_blank'>{entry.title}</a>: {summary}</li>")
     return "<ul>" + "".join(news_items) + "</ul>"
 
 # ✉️ Generate HTML Newsletter
 def generate_newsletter():
     news_content = fetch_and_summarize_news()
-    newsletter_html = f"""
+    return f"""
     <html>
         <body>
             <h2>Weekly Biotech & VC Insights</h2>
@@ -53,15 +66,11 @@ def generate_newsletter():
         </body>
     </html>
     """
-    return newsletter_html
 
-# 📬 Send Newsletter via SMTP
+# 📬 Send Newsletter via SMTP (Consider Using Mailchimp Instead)
 def send_email(newsletter_html, recipient_email):
-    sender_email = "your_email@example.com"
-    password = "your_email_password"
-
     msg = MIMEMultipart()
-    msg['From'] = sender_email
+    msg['From'] = EMAIL_USERNAME
     msg['To'] = recipient_email
     msg['Subject'] = "Weekly Biotech & VC Newsletter"
     msg.attach(MIMEText(newsletter_html, 'html'))
@@ -69,8 +78,8 @@ def send_email(newsletter_html, recipient_email):
     try:
         with smtplib.SMTP('smtp.gmail.com', 587) as server:
             server.starttls()
-            server.login(sender_email, password)
-            server.sendmail(sender_email, recipient_email, msg.as_string())
+            server.login(EMAIL_USERNAME, EMAIL_PASSWORD)
+            server.sendmail(EMAIL_USERNAME, recipient_email, msg.as_string())
         return "Newsletter sent successfully!"
     except Exception as e:
         return f"Error sending email: {e}"
@@ -100,3 +109,7 @@ if st.button("Subscribe"):
         st.success("You're subscribed!")
     else:
         st.error("Please enter a valid email address.")
+
+# ✅ Ensure Streamlit runs properly
+if __name__ == "__main__":
+    st.write("App Running Successfully 🚀")
