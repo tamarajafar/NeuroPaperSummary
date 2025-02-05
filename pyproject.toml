@@ -8,4 +8,6 @@ dependencies = [
     "streamlit-calendar>=1.2.1",
     "streamlit>=1.42.0",
     "markdown>=3.7",
+    "sqlalchemy>=2.0.37",
+    "psycopg2-binary>=2.9.10",
 ]
