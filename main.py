@@ -16,40 +16,115 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
     <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
     .block-container {
-        padding-top: 1rem;
-        padding-bottom: 0rem;
+        padding: 3rem 2rem !important;
+        max-width: 1200px;
+        margin: 0 auto;
     }
+    
     .main > div {
-        padding: 2rem;
-        border-radius: 0.5rem;
-        background: white;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
+        padding: 2.5rem;
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.98);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
+    
+    .main > div:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    }
+    
     h1 {
         color: #1e3d59;
-        font-size: 2.5rem !important;
-        margin-bottom: 1.5rem !important;
+        font-family: 'Inter', sans-serif;
+        font-size: 3rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 2rem !important;
+        letter-spacing: -0.02em;
     }
+    
     h2 {
-        color: #1e3d59;
-        font-size: 1.8rem !important;
+        color: #2a4a6d;
+        font-family: 'Inter', sans-serif;
+        font-size: 2rem !important;
+        font-weight: 600 !important;
+        margin: 1.5rem 0 !important;
     }
+    
     h3 {
-        color: #1e3d59;
-        font-size: 1.3rem !important;
+        color: #355a82;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.5rem !important;
+        font-weight: 500 !important;
     }
+    
+    p, li {
+        color: #4a5568;
+        font-family: 'Inter', sans-serif;
+        font-size: 1.1rem;
+        line-height: 1.7;
+    }
+    
     .stButton button {
         width: 100%;
-        border-radius: 0.3rem;
-        height: 3rem;
-        background-color: #1e3d59;
+        border-radius: 0.5rem;
+        height: 3.5rem;
+        background: linear-gradient(135deg, #1e3d59 0%, #2a4a6d 100%);
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        font-size: 1.1rem;
+        transition: all 0.2s ease;
+        border: none;
+        box-shadow: 0 2px 10px rgba(30, 61, 89, 0.15);
     }
+    
+    .stButton button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(30, 61, 89, 0.25);
+    }
+    
     .stSelectbox > div > div {
         background-color: white;
+        border-radius: 0.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .sidebar .sidebar-content {
+        background: #f8fafc;
+        padding: 2rem 1rem;
+    }
+    
+    .sidebar .sidebar-content .block-container {
+        padding: 0 !important;
+    }
+    
+    /* Calendar styling */
+    .fc {
+        background: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .fc-button {
+        background: #1e3d59 !important;
+        border: none !important;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Publication cards */
+    div[data-testid="stExpander"] {
+        border: 1px solid #e2e8f0;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        background: white;
     }
     </style>
+""", unsafe_allow_html=True)
 """, unsafe_allow_html=True)
 
 # Initialize session state
