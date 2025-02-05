@@ -3,9 +3,6 @@ from openai import OpenAI
 import json
 from .database import get_db, get_paper_by_title, save_summary
 
-# the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-# do not change this unless explicitly requested by the user
-
 class ResearchSummarizer:
     def __init__(self):
         self.client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -36,7 +33,7 @@ class ResearchSummarizer:
             """
 
             response = self.client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-4",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
