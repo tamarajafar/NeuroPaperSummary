@@ -1,236 +1,102 @@
 import streamlit as st
-import json
-from datetime import datetime, timedelta
-import streamlit_calendar as st_cal
-from utils.openai_helper import ResearchSummarizer
-from utils.paper_processor import PaperFetcher
-import markdown
+import feedparser
+import openai
+import smtplib
+import schedule
+import time
+import firebase_admin
+from firebase_admin import credentials, firestore
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-# Page configuration
-st.set_page_config(
-    page_title="Academic Profile",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# 🔗 Firebase for storing subscribers & engagement
+cred = credentials.Certificate("firebase_creds.json")  # Ensure your Firebase credentials file is set
+firebase_admin.initialize_app(cred)
+db = firestore.client()
 
-# Custom CSS
-st.markdown("""
-    <style>
-    .block-container {
-        padding-top: 1rem;
-        padding-bottom: 0rem;
-    }
-    .main > div {
-        padding: 2rem;
-        border-radius: 0.5rem;
-        background: white;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        margin-bottom: 1rem;
-    }
-    h1 {
-        color: #1e3d59;
-        font-size: 2.5rem !important;
-        margin-bottom: 1.5rem !important;
-    }
-    h2 {
-        color: #1e3d59;
-        font-size: 1.8rem !important;
-    }
-    h3 {
-        color: #1e3d59;
-        font-size: 1.3rem !important;
-    }
-    .stButton button {
-        width: 100%;
-        border-radius: 0.3rem;
-        height: 3rem;
-        background-color: #1e3d59;
-    }
-    .stSelectbox > div > div {
-        background-color: white;
-    }
-    </style>
-""", unsafe_allow_html=True)
+# 🌍 RSS Feeds for Biotech & VC news
+RSS_FEEDS = [
+    "https://www.fiercebiotech.com/rss.xml",
+    "https://www.statnews.com/feed/",
+    "https://techcrunch.com/category/biotech/feed/",
+    "https://news.crunchbase.com/feed/"
+]
 
-# Initialize session state
-if 'current_tab' not in st.session_state:
-    st.session_state.current_tab = "About"
-
-# Sidebar navigation
-st.sidebar.title("Navigation")
-st.session_state.current_tab = st.sidebar.radio(
-    "Go to",
-    ["About", "CV", "Publications", "Book Meeting", "Research Summarizer", "Newsletter"]
-)
-
-def load_markdown_content(file_path):
-    with open(file_path, 'r') as file:
-        return markdown.markdown(file.read())
-
-def load_json_content(file_path):
-    with open(file_path, 'r') as file:
-        return json.load(file)
-
-# About Me Section
-if st.session_state.current_tab == "About":
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.image("assets/profile.svg", width=250)
-        st.markdown("""
-            <div style='text-align: center; padding: 1rem;'>
-                <a href='mailto:researcher@institution.edu' style='text-decoration: none; color: #1e3d59;'>
-                    <i class='fas fa-envelope'></i> Email
-                </a> &nbsp;|&nbsp;
-                <a href='https://linkedin.com' style='text-decoration: none; color: #1e3d59;'>
-                    <i class='fab fa-linkedin'></i> LinkedIn
-                </a>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.title("About Me")
-        about_content = load_markdown_content("data/about.md")
-        st.markdown(about_content, unsafe_allow_html=True)
-
-# CV Section
-elif st.session_state.current_tab == "CV":
-    st.title("Curriculum Vitae")
-    cv_content = load_markdown_content("data/cv.md")
-    st.markdown(cv_content, unsafe_allow_html=True)
-    
-    # Download CV button
-    st.download_button(
-        label="Download CV as PDF",
-        data=cv_content,
-        file_name="cv.pdf",
-        mime="application/pdf"
+# 🧠 GPT-4 Summarization Function
+def summarize_news(news_text):
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "system", "content": "Summarize this biotech news in 3 sentences."},
+                  {"role": "user", "content": news_text}]
     )
+    return response['choices'][0]['message']['content']
 
-# Publications Section
-elif st.session_state.current_tab == "Publications":
-    st.title("Publications")
-    publications = load_json_content("data/publications.json")
-    
-    col1, col2, col3 = st.columns([2, 2, 1])
-    with col1:
-        year_filter = st.selectbox(
-            "Filter by Year",
-            ["All"] + sorted(list(set(pub["year"] for pub in publications)), reverse=True),
-            index=0
-        )
-    with col2:
-        type_filter = st.selectbox(
-            "Publication Type",
-            ["All", "Journal", "Conference", "Book Chapter"],
-            index=0
-        )
-    
-    # Display filtered publications
-    for pub in publications:
-        if year_filter == "All" or pub["year"] == year_filter:
-            st.markdown(f"""
-            ### {pub['title']}
-            **Authors:** {pub['authors']}  
-            **Year:** {pub['year']}  
-            **Journal:** {pub['journal']}  
-            [Link to paper]({pub['url']})
-            """)
-            st.divider()
+# 🔍 Fetch News from RSS and Summarize
+def fetch_and_summarize_news():
+    news_items = []
+    for url in RSS_FEEDS:
+        feed = feedparser.parse(url)
+        for entry in feed.entries[:3]:  # Top 3 news per source
+            summary = summarize_news(entry.summary)
+            news_items.append(f"<li><a href='{entry.link}' target='_blank'>{entry.title}</a>: {summary}</li>")
+    return "<ul>" + "".join(news_items) + "</ul>"
 
-# Book Meeting Section
-elif st.session_state.current_tab == "Book Meeting":
-    st.title("Schedule a Meeting")
-    
-    # Calendar setup
-    calendar_options = {
-        "headerToolbar": {
-            "left": "prev,next today",
-            "center": "title",
-            "right": "dayGridMonth,timeGridWeek"
-        },
-        "initialView": "timeGridWeek",
-        "selectable": True,
-        "selectMirror": True,
-        "weekends": False,
-    }
-    
-    # Create available time slots
-    events = []
-    start_date = datetime.now()
-    for i in range(14):  # Next 2 weeks
-        current_date = start_date + timedelta(days=i)
-        if current_date.weekday() < 5:  # Monday to Friday
-            events.append({
-                "title": "Available",
-                "start": (current_date + timedelta(hours=9)).isoformat(),
-                "end": (current_date + timedelta(hours=17)).isoformat(),
-                "color": "#28a745"
-            })
-    
-    calendar = st_cal.calendar(events=events, options=calendar_options)
-    
-    if calendar.get("eventClick"):
-        st.success("Meeting request sent! You will receive a confirmation email shortly.")
+# ✉️ Generate HTML Newsletter
+def generate_newsletter():
+    news_content = fetch_and_summarize_news()
+    newsletter_html = f"""
+    <html>
+        <body>
+            <h2>Weekly Biotech & VC Insights</h2>
+            {news_content}
+            <p>Stay ahead in biotech and venture capital!</p>
+        </body>
+    </html>
+    """
+    return newsletter_html
 
-# Research Summarizer Section
-elif st.session_state.current_tab == "Research Summarizer":
-    st.title("AI-Powered Research Summarizer")
-    
-    search_query = st.text_input("Enter your research topic:")
-    
-    if search_query:
-        try:
-            with st.spinner("Fetching and analyzing papers..."):
-                paper_fetcher = PaperFetcher()
-                summarizer = ResearchSummarizer()
-                
-                papers = paper_fetcher.search_papers(search_query)
-                
-                for paper in papers:
-                    st.markdown(f"### {paper['title']}")
-                    
-                    summary = summarizer.summarize_paper(paper['title'], paper['abstract'])
-                    
-                    with st.expander("View Summary"):
-                        st.markdown("**Key Findings:**")
-                        st.write(summary['key_findings'])
-                        st.markdown("**Methodology:**")
-                        st.write(summary['methodology'])
-                        st.markdown("**Implications:**")
-                        st.write(summary['implications'])
-                        
-                    st.divider()
-                    
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
+# 📬 Send Newsletter via SMTP
+def send_email(newsletter_html, recipient_email):
+    sender_email = "your_email@example.com"
+    password = "your_email_password"
 
-# Newsletter Section
-elif st.session_state.current_tab == "Newsletter":
-    st.title("Biotech & VC Newsletter")
-    
-    from utils.newsletter_generator import NewsletterGenerator
-    
-    if st.button("Generate Newsletter"):
-        with st.spinner("Generating newsletter content..."):
-            try:
-                generator = NewsletterGenerator()
-                newsletter = generator.generate_newsletter()
-                
-                st.write(f"### Newsletter for {newsletter['date']}")
-                
-                for section in newsletter['sections']:
-                    st.write(f"## {section['source'].title()}")
-                    for item in section['items']:
-                        with st.expander(item['title']):
-                            st.write(item['summary'])
-                            st.write(f"[Read more]({item['link']})")
-                
-                # Save newsletter to JSON
-                with open(f"data/newsletters/{newsletter['date']}.json", "w") as f:
-                    json.dump(newsletter, f, indent=2)
-                    
-                st.success("Newsletter generated successfully!")
-                
-            except Exception as e:
-                st.error(f"Failed to generate newsletter: {str(e)}")
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = recipient_email
+    msg['Subject'] = "Weekly Biotech & VC Newsletter"
+    msg.attach(MIMEText(newsletter_html, 'html'))
+
+    try:
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.starttls()
+            server.login(sender_email, password)
+            server.sendmail(sender_email, recipient_email, msg.as_string())
+        return "Newsletter sent successfully!"
+    except Exception as e:
+        return f"Error sending email: {e}"
+
+# 📌 Streamlit UI
+st.title("📩 Biotech & VC Weekly Newsletter")
+st.markdown("**Built by Tamara Jafar** ([LinkedIn](https://www.linkedin.com/in/tamarajafar/) | [X](https://x.com/TamaraJafar))")
+
+st.subheader("🔍 Preview This Week's Newsletter")
+st.markdown(generate_newsletter(), unsafe_allow_html=True)
+
+st.subheader("📬 Send Newsletter")
+recipient_email = st.text_input("Enter recipient email:")
+if st.button("Send Now"):
+    if recipient_email:
+        result = send_email(generate_newsletter(), recipient_email)
+        st.success(result)
+    else:
+        st.error("Please enter a valid email address.")
+
+# ✅ Track Subscribers in Firebase
+st.subheader("📨 Subscribe to Weekly Newsletter")
+new_subscriber = st.text_input("Enter your email to subscribe:")
+if st.button("Subscribe"):
+    if new_subscriber:
+        db.collection("subscribers").add({"email": new_subscriber})
+        st.success("You're subscribed!")
+    else:
+        st.error("Please enter a valid email address.")
