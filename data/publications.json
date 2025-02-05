@@ -1,0 +1,23 @@
+[
+    {
+        "title": "Example Publication 1",
+        "authors": "LastName, FirstName; Coauthor, Name",
+        "year": 2023,
+        "journal": "Journal of Important Research",
+        "url": "https://doi.org/example1"
+    },
+    {
+        "title": "Example Publication 2",
+        "authors": "LastName, FirstName; Coauthor, Name",
+        "year": 2022,
+        "journal": "International Journal of Science",
+        "url": "https://doi.org/example2"
+    },
+    {
+        "title": "Example Publication 3",
+        "authors": "LastName, FirstName; Coauthor, Name",
+        "year": 2022,
+        "journal": "Nature Research",
+        "url": "https://doi.org/example3"
+    }
+]
