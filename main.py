@@ -1,3 +1,4 @@
+import json
 import os
 import streamlit as st
 import feedparser
@@ -17,23 +18,18 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"]
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME") or st.secrets["EMAIL_USERNAME"]
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") or st.secrets["EMAIL_PASSWORD"]
 
-
-# ✅ Ensure Firebase credentials exist
 if "firebase" in st.secrets:
     try:
-        # Convert JSON string to Python dictionary
-        firebase_creds = json.loads(st.secrets["firebase"]["credentials"])
-        
-        # Initialize Firebase
+        firebase_creds = json.loads(st.secrets["firebase"]["credentials"])  # ✅ Fix JSON loading
         cred = credentials.Certificate(firebase_creds)
         firebase_admin.initialize_app(cred)
         db = firestore.client()
-
         st.success("✅ Firebase Initialized Successfully!")
     except Exception as e:
         st.error(f"🚨 Firebase Initialization Failed: {e}")
 else:
     st.error("🚨 Firebase credentials are missing! Add them to Streamlit Secrets.")
+
 
 # 🌍 RSS Feeds for Biotech & VC news
 RSS_FEEDS = [
@@ -44,17 +40,18 @@ RSS_FEEDS = [
 ]
 
 # 🧠 GPT-4 Summarization Function
+import openai
+
 def summarize_news(news_text):
-    try:
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            api_key=OPENAI_API_KEY,  # 🔹 Ensuring API key is used correctly
-            messages=[{"role": "system", "content": "Summarize this biotech news in 3 sentences."},
-                      {"role": "user", "content": news_text}]
-        )
-        return response['choices'][0]['message']['content']
-    except Exception as e:
-        return f"Error summarizing: {e}"
+    client = openai.OpenAI()  # ✅ New OpenAI API client instance
+    response = client.chat.completions.create(  # ✅ Updated method
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": "Summarize this biotech news in 3 sentences."},
+            {"role": "user", "content": news_text}
+        ]
+    )
+    return response.choices[0].message.content  # ✅ Updated response handling
 
 # 🔍 Fetch News from RSS and Summarize
 def fetch_and_summarize_news():
