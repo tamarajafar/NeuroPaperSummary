@@ -39,19 +39,18 @@ RSS_FEEDS = [
     "https://news.crunchbase.com/feed/"
 ]
 
-# ✅ OpenAI Summarization Function
+# ✅ Fixed OpenAI Summarization Function
 def summarize_news(news_text):
-    openai.api_key = OPENAI_API_KEY  # Ensure API key is set
-    client = openai.OpenAI()  # ✅ Fix OpenAI client initialization
+    openai.api_key = OPENAI_API_KEY  # ✅ Ensure API key is set correctly
     try:
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "Summarize this biotech news in 3 sentences."},
                 {"role": "user", "content": news_text}
             ]
         )
-        return response.choices[0].message.content
+        return response["choices"][0]["message"]["content"]
     except Exception as e:
         return f"⚠️ Error summarizing: {str(e)}"
 
@@ -61,7 +60,7 @@ def fetch_and_summarize_news():
     for url in RSS_FEEDS:
         feed = feedparser.parse(url)
         for entry in feed.entries[:3]:  # Fetch top 3 news per source
-            summary = summarize_news(entry.summary if hasattr(entry, "summary") else entry.title)
+            summary = summarize_news(getattr(entry, "summary", entry.title))
             news_items.append(f"<li><a href='{entry.link}' target='_blank'>{entry.title}</a>: {summary}</li>")
     return "<ul>" + "".join(news_items) + "</ul>"
 
