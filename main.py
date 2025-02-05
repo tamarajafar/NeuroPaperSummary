@@ -4,32 +4,41 @@ import streamlit as st
 import feedparser
 import openai
 import smtplib
+import schedule
 import firebase_admin
 from firebase_admin import credentials, firestore
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-# ✅ Ensure all required dependencies are installed
-os.system("pip install -r requirements.txt")
+# 🔹 Load API Keys securely from Streamlit Secrets
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY", None)
+EMAIL_USERNAME = os.getenv("EMAIL_USERNAME") or st.secrets.get("EMAIL_USERNAME", None)
+EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") or st.secrets.get("EMAIL_PASSWORD", None)
 
-# ✅ Load API Keys securely from Streamlit Secrets
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
-EMAIL_USERNAME = os.getenv("EMAIL_USERNAME") or st.secrets.get("EMAIL_USERNAME")
-EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") or st.secrets.get("EMAIL_PASSWORD")
+if not OPENAI_API_KEY:
+    st.error("🚨 OpenAI API key is missing! Add it to Streamlit Secrets.")
+    st.stop()
 
-# ✅ Firebase Initialization
-if "firebase" in st.secrets:
+if not EMAIL_USERNAME or not EMAIL_PASSWORD:
+    st.error("🚨 Email credentials are missing! Add them to Streamlit Secrets.")
+    st.stop()
+
+# 🔹 Initialize Firebase
+firebase_creds = st.secrets.get("firebase", {}).get("credentials", None)
+
+if firebase_creds:
     try:
-        firebase_creds = json.loads(st.secrets["firebase"]["credentials"])
-        cred = credentials.Certificate(firebase_creds)
-        if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred)
+        firebase_creds_dict = json.loads(firebase_creds)
+        cred = credentials.Certificate(firebase_creds_dict)
+        firebase_admin.initialize_app(cred)
         db = firestore.client()
         st.success("✅ Firebase Initialized Successfully!")
     except Exception as e:
-        st.error(f"🚨 Firebase Initialization Failed: {str(e)}")
+        st.error(f"🚨 Firebase Initialization Failed: {e}")
+        st.stop()
 else:
     st.error("🚨 Firebase credentials are missing! Add them to Streamlit Secrets.")
+    st.stop()
 
 # 🌍 RSS Feeds for Biotech & VC news
 RSS_FEEDS = [
@@ -39,32 +48,32 @@ RSS_FEEDS = [
     "https://news.crunchbase.com/feed/"
 ]
 
-# ✅ Fixed OpenAI Summarization Function
+# 🧠 GPT-4 Summarization Function
 def summarize_news(news_text):
-    openai.api_key = OPENAI_API_KEY  # ✅ Ensure API key is set correctly
     try:
-        response = openai.ChatCompletion.create(
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)  # ✅ Fixed OpenAI API client
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[
                 {"role": "system", "content": "Summarize this biotech news in 3 sentences."},
                 {"role": "user", "content": news_text}
             ]
         )
-        return response["choices"][0]["message"]["content"]
+        return response.choices[0].message.content  # ✅ Fixed response handling
     except Exception as e:
-        return f"⚠️ Error summarizing: {str(e)}"
+        return f"⚠️ Error summarizing news: {e}"
 
-# 🔍 Fetch & Summarize News
+# 🔍 Fetch News from RSS and Summarize
 def fetch_and_summarize_news():
     news_items = []
     for url in RSS_FEEDS:
         feed = feedparser.parse(url)
-        for entry in feed.entries[:3]:  # Fetch top 3 news per source
+        for entry in feed.entries[:3]:  # Top 3 news per source
             summary = summarize_news(getattr(entry, "summary", entry.title))
             news_items.append(f"<li><a href='{entry.link}' target='_blank'>{entry.title}</a>: {summary}</li>")
     return "<ul>" + "".join(news_items) + "</ul>"
 
-# ✉️ Generate Newsletter HTML
+# ✉️ Generate HTML Newsletter
 def generate_newsletter():
     news_content = fetch_and_summarize_news()
     return f"""
@@ -77,11 +86,8 @@ def generate_newsletter():
     </html>
     """
 
-# ✅ Send Email via SMTP
+# 📬 Send Newsletter via SMTP
 def send_email(newsletter_html, recipient_email):
-    if not EMAIL_USERNAME or not EMAIL_PASSWORD:
-        return "🚨 Email credentials are missing!"
-
     msg = MIMEMultipart()
     msg['From'] = EMAIL_USERNAME
     msg['To'] = recipient_email
@@ -95,9 +101,9 @@ def send_email(newsletter_html, recipient_email):
             server.sendmail(EMAIL_USERNAME, recipient_email, msg.as_string())
         return "✅ Newsletter sent successfully!"
     except Exception as e:
-        return f"⚠️ Error sending email: {str(e)}"
+        return f"🚨 Error sending email: {e}"
 
-# ✅ Streamlit UI
+# 📌 Streamlit UI
 st.title("📩 Biotech & VC Weekly Newsletter")
 st.markdown("**Built by Tamara Jafar** ([LinkedIn](https://www.linkedin.com/in/tamarajafar/) | [X](https://x.com/TamaraJafar))")
 
@@ -113,13 +119,16 @@ if st.button("Send Now"):
     else:
         st.error("🚨 Please enter a valid email address.")
 
-# ✅ Firebase Subscribers
+# ✅ Track Subscribers in Firebase
 st.subheader("📨 Subscribe to Weekly Newsletter")
 new_subscriber = st.text_input("Enter your email to subscribe:")
 if st.button("Subscribe"):
     if new_subscriber:
-        db.collection("subscribers").add({"email": new_subscriber})
-        st.success("✅ You're subscribed!")
+        try:
+            db.collection("subscribers").add({"email": new_subscriber})
+            st.success("✅ You're subscribed!")
+        except Exception as e:
+            st.error(f"🚨 Error adding subscriber: {e}")
     else:
         st.error("🚨 Please enter a valid email address.")
 
