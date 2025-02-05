@@ -17,11 +17,23 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or st.secrets["OPENAI_API_KEY"]
 EMAIL_USERNAME = os.getenv("EMAIL_USERNAME") or st.secrets["EMAIL_USERNAME"]
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD") or st.secrets["EMAIL_PASSWORD"]
 
-# 🔹 Firebase Setup
-if not firebase_admin._apps:
-    cred = credentials.Certificate(st.secrets["firebase_creds"])  # Store in Streamlit Secrets
-    firebase_admin.initialize_app(cred)
-db = firestore.client()
+
+# ✅ Ensure Firebase credentials exist
+if "firebase" in st.secrets:
+    try:
+        # Convert JSON string to Python dictionary
+        firebase_creds = json.loads(st.secrets["firebase"]["credentials"])
+        
+        # Initialize Firebase
+        cred = credentials.Certificate(firebase_creds)
+        firebase_admin.initialize_app(cred)
+        db = firestore.client()
+
+        st.success("✅ Firebase Initialized Successfully!")
+    except Exception as e:
+        st.error(f"🚨 Firebase Initialization Failed: {e}")
+else:
+    st.error("🚨 Firebase credentials are missing! Add them to Streamlit Secrets.")
 
 # 🌍 RSS Feeds for Biotech & VC news
 RSS_FEEDS = [
