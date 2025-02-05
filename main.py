@@ -127,16 +127,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 """, unsafe_allow_html=True)
 
-# Initialize session state
-if 'current_tab' not in st.session_state:
-    st.session_state.current_tab = "About"
+# Set up streamlit state and navigation in a function
+def initialize_navigation():
+    if 'current_tab' not in st.session_state:
+        st.session_state.current_tab = "About"
+    
+    st.sidebar.title("Navigation")
+    st.session_state.current_tab = st.sidebar.radio(
+        "Go to",
+        ["About", "CV", "Publications", "Book Meeting", "Research Summarizer"]
+    )
 
-# Sidebar navigation
-st.sidebar.title("Navigation")
-st.session_state.current_tab = st.sidebar.radio(
-    "Go to",
-    ["About", "CV", "Publications", "Book Meeting", "Research Summarizer"]
-)
+# Initialize navigation
+initialize_navigation()
 
 def load_markdown_content(file_path):
     with open(file_path, 'r') as file:
