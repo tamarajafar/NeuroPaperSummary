@@ -7,7 +7,50 @@ from utils.paper_processor import PaperFetcher
 import markdown
 
 # Page configuration
-st.set_page_config(page_title="Academic Profile", layout="wide")
+st.set_page_config(
+    page_title="Academic Profile",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Custom CSS
+st.markdown("""
+    <style>
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 0rem;
+    }
+    .main > div {
+        padding: 2rem;
+        border-radius: 0.5rem;
+        background: white;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        margin-bottom: 1rem;
+    }
+    h1 {
+        color: #1e3d59;
+        font-size: 2.5rem !important;
+        margin-bottom: 1.5rem !important;
+    }
+    h2 {
+        color: #1e3d59;
+        font-size: 1.8rem !important;
+    }
+    h3 {
+        color: #1e3d59;
+        font-size: 1.3rem !important;
+    }
+    .stButton button {
+        width: 100%;
+        border-radius: 0.3rem;
+        height: 3rem;
+        background-color: #1e3d59;
+    }
+    .stSelectbox > div > div {
+        background-color: white;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Initialize session state
 if 'current_tab' not in st.session_state:
@@ -30,15 +73,25 @@ def load_json_content(file_path):
 
 # About Me Section
 if st.session_state.current_tab == "About":
-    st.title("About Me")
-    about_content = load_markdown_content("data/about.md")
-    st.markdown(about_content, unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 2])
     
-    # Profile image using Font Awesome
-    st.markdown("""
-        <i class="fas fa-user-circle fa-10x"></i>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    with col1:
+        st.image("assets/profile.svg", width=250)
+        st.markdown("""
+            <div style='text-align: center; padding: 1rem;'>
+                <a href='mailto:researcher@institution.edu' style='text-decoration: none; color: #1e3d59;'>
+                    <i class='fas fa-envelope'></i> Email
+                </a> &nbsp;|&nbsp;
+                <a href='https://linkedin.com' style='text-decoration: none; color: #1e3d59;'>
+                    <i class='fab fa-linkedin'></i> LinkedIn
+                </a>
+            </div>
         """, unsafe_allow_html=True)
+    
+    with col2:
+        st.title("About Me")
+        about_content = load_markdown_content("data/about.md")
+        st.markdown(about_content, unsafe_allow_html=True)
 
 # CV Section
 elif st.session_state.current_tab == "CV":
@@ -59,12 +112,19 @@ elif st.session_state.current_tab == "Publications":
     st.title("Publications")
     publications = load_json_content("data/publications.json")
     
-    # Filter options
-    year_filter = st.selectbox(
-        "Filter by year",
-        ["All"] + sorted(list(set(pub["year"] for pub in publications))),
-        index=0
-    )
+    col1, col2, col3 = st.columns([2, 2, 1])
+    with col1:
+        year_filter = st.selectbox(
+            "Filter by Year",
+            ["All"] + sorted(list(set(pub["year"] for pub in publications)), reverse=True),
+            index=0
+        )
+    with col2:
+        type_filter = st.selectbox(
+            "Publication Type",
+            ["All", "Journal", "Conference", "Book Chapter"],
+            index=0
+        )
     
     # Display filtered publications
     for pub in publications:
