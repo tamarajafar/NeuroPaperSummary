@@ -16,102 +16,10 @@ st.set_page_config(
 # Custom CSS
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-    
     .block-container {
-        padding: 2rem 3rem !important;
-        max-width: 1200px;
+        padding-top: 1rem;
+        padding-bottom: 0rem;
     }
-    
-    .main > div {
-        padding: 1.5rem;
-        border-radius: 12px;
-        background: rgba(37, 40, 55, 0.8);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-        margin-bottom: 1.5rem;
-    }
-    
-    .main > div:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-    }
-    
-    h1 {
-        font-family: 'Inter', sans-serif;
-        color: #e0fbfc;
-        font-size: 2.8rem !important;
-        font-weight: 600;
-        margin-bottom: 2rem !important;
-        letter-spacing: -0.02em;
-    }
-    
-    h2 {
-        font-family: 'Inter', sans-serif;
-        color: #98c1d9;
-        font-size: 1.8rem !important;
-        font-weight: 500;
-        margin: 1.5rem 0 !important;
-    }
-    
-    h3 {
-        color: #98c1d9;
-        font-size: 1.3rem !important;
-        font-weight: 500;
-    }
-    
-    p, li {
-        color: #e0fbfc;
-        font-size: 1.1rem;
-        line-height: 1.6;
-    }
-    
-    .stButton button {
-        width: 100%;
-        padding: 0.8rem 1.5rem;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #3d5a80 0%, #4c6885 100%);
-        color: white;
-        border: none;
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-    
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(61, 90, 128, 0.3);
-    }
-    
-    .stSelectbox > div > div {
-        background-color: #252837;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-    }
-    
-    a {
-        color: #98c1d9;
-        text-decoration: none;
-        transition: color 0.2s ease;
-    }
-    
-    a:hover {
-        color: #e0fbfc;
-    }
-    
-    .publication-card {
-        padding: 1.5rem;
-        border-radius: 8px;
-        background: rgba(61, 90, 128, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        margin-bottom: 1rem;
-        transition: all 0.2s ease;
-    }
-    
-    .publication-card:hover {
-        background: rgba(61, 90, 128, 0.2);
-    }
-    </style>
     .main > div {
         padding: 2rem;
         border-radius: 0.5rem;
@@ -220,16 +128,15 @@ elif st.session_state.current_tab == "Publications":
     
     # Display filtered publications
     for pub in publications:
-        if (year_filter == "All" or pub["year"] == year_filter) and \
-           (type_filter == "All" or pub.get("type", "") == type_filter):
+        if year_filter == "All" or pub["year"] == year_filter:
             st.markdown(f"""
-            <div class="publication-card">
-                <h3>{pub['title']}</h3>
-                <p><strong>Authors:</strong> {pub['authors']}</p>
-                <p><strong>Year:</strong> {pub['year']} | <strong>Journal:</strong> {pub['journal']}</p>
-                <a href="{pub['url']}" target="_blank">View Publication →</a>
-            </div>
-            """, unsafe_allow_html=True)
+            ### {pub['title']}
+            **Authors:** {pub['authors']}  
+            **Year:** {pub['year']}  
+            **Journal:** {pub['journal']}  
+            [Link to paper]({pub['url']})
+            """)
+            st.divider()
 
 # Book Meeting Section
 elif st.session_state.current_tab == "Book Meeting":
