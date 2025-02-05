@@ -1,3 +1,4 @@
+streamlit>=1.42.0
 click==8.0.4
 dataclasses==0.8
 Flask==2.0.3
@@ -9,5 +10,3 @@ tornado==6.1
 typing_extensions==4.1.1
 Werkzeug==2.0.3
 zipp==3.6.0
-ChatGPT said:
-ChatGPT
