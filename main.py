@@ -60,7 +60,7 @@ if 'current_tab' not in st.session_state:
 st.sidebar.title("Navigation")
 st.session_state.current_tab = st.sidebar.radio(
     "Go to",
-    ["About", "CV", "Publications", "Book Meeting", "Research Summarizer"]
+    ["About", "CV", "Publications", "Book Meeting", "Research Summarizer", "Newsletter"]
 )
 
 def load_markdown_content(file_path):
@@ -204,3 +204,33 @@ elif st.session_state.current_tab == "Research Summarizer":
                     
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
+
+# Newsletter Section
+elif st.session_state.current_tab == "Newsletter":
+    st.title("Biotech & VC Newsletter")
+    
+    from utils.newsletter_generator import NewsletterGenerator
+    
+    if st.button("Generate Newsletter"):
+        with st.spinner("Generating newsletter content..."):
+            try:
+                generator = NewsletterGenerator()
+                newsletter = generator.generate_newsletter()
+                
+                st.write(f"### Newsletter for {newsletter['date']}")
+                
+                for section in newsletter['sections']:
+                    st.write(f"## {section['source'].title()}")
+                    for item in section['items']:
+                        with st.expander(item['title']):
+                            st.write(item['summary'])
+                            st.write(f"[Read more]({item['link']})")
+                
+                # Save newsletter to JSON
+                with open(f"data/newsletters/{newsletter['date']}.json", "w") as f:
+                    json.dump(newsletter, f, indent=2)
+                    
+                st.success("Newsletter generated successfully!")
+                
+            except Exception as e:
+                st.error(f"Failed to generate newsletter: {str(e)}")
